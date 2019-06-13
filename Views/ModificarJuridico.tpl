@@ -34,33 +34,15 @@
 </ul>
 
 <div class="container mt-5">
-<form action="/NuevoFisico" method="post">
+<form action="/ModificarJuridico" method="post">
   <div class="form-row">
     <div class="form-group col-md-6">
-      <label for="inputDNI">DNI</label>
-      <input type="number" class="form-control" name="dni" id="inputDNI" placeholder="DNI" required>
+      <label for="inputRazonSocial">Razon Social</label>
+      <input type="text" class="form-control" name="RazonSocial" id="inputRazonSocial" placeholder="Razon Social" required>
     </div>
     <div class="form-group col-md-6">
       <label for="inputCUIL">CUIL</label>
-      <input type="text" class="form-control" name="cuil" id="inputCUIL" placeholder="CUIL" required>
-    </div>
-    <div class="form-group col-md-6">
-      <label for="inputNombre">Nombre</label>
-      <input type="text" class="form-control" name="nombre" id="inputNombre" placeholder="Nombre" required>
-    </div>
-    <div class="form-group col-md-6">
-      <label for="inputApellido">Apellido</label>
-      <input type="text" class="form-control" name="apellido" id="inputApellido" placeholder="Apellido" required>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="inputUsuario">Usuario</label>
-      <input type="text" class="form-control" id="inputUsuario" name="usuario" placeholder="Usuario" required>
-    </div>
-    <div class="form-group col-md-6">
-      <label for="inputContraseña">Contraseña</label>
-      <input type="password" class="form-control" id="inputContraseña" name="contrasenia" placeholder="Contraseña" required>
+      <input type="text" class="form-control" name="cuil" id="inputCUIL" placeholder="CUIL">
     </div>
   </div>
   <button type="submit" class="btn btn-primary">Cargar</button>

@@ -34,7 +34,7 @@
 </ul>
 
 <div class="container mt-5">
-<form action="/NuevoFisico" method="post">
+<form action="/ModificarFisico" method="post">
   <div class="form-row">
     <div class="form-group col-md-6">
       <label for="inputDNI">DNI</label>
@@ -42,25 +42,15 @@
     </div>
     <div class="form-group col-md-6">
       <label for="inputCUIL">CUIL</label>
-      <input type="text" class="form-control" name="cuil" id="inputCUIL" placeholder="CUIL" required>
+      <input type="text" class="form-control" name="cuil" id="inputCUIL" placeholder="CUIL">
     </div>
     <div class="form-group col-md-6">
       <label for="inputNombre">Nombre</label>
-      <input type="text" class="form-control" name="nombre" id="inputNombre" placeholder="Nombre" required>
+      <input type="text" class="form-control" name="nombre" id="inputNombre" placeholder="Nombre">
     </div>
     <div class="form-group col-md-6">
       <label for="inputApellido">Apellido</label>
-      <input type="text" class="form-control" name="apellido" id="inputApellido" placeholder="Apellido" required>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="inputUsuario">Usuario</label>
-      <input type="text" class="form-control" id="inputUsuario" name="usuario" placeholder="Usuario" required>
-    </div>
-    <div class="form-group col-md-6">
-      <label for="inputContraseña">Contraseña</label>
-      <input type="password" class="form-control" id="inputContraseña" name="contrasenia" placeholder="Contraseña" required>
+      <input type="text" class="form-control" name="apellido" id="inputApellido" placeholder="Apellido">
     </div>
   </div>
   <button type="submit" class="btn btn-primary">Cargar</button>

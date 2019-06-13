@@ -34,11 +34,46 @@ def do_NuevoFisico():
     nombre= request.forms.get('nombre')
     apellido= request.forms.get('apellido')
     usuario= request.forms.get('usuario')
-    print(usuario)
     contrasenia= request.forms.get('contrasenia')
     hashContra = pbkdf2_sha256.hash(contrasenia)
-    print(hashContra)
     return agregar_fisico(dni,cuil,nombre,apellido,usuario,hashContra)
+
+
+@get('/NuevoJuridico') # o @route('/NuevoJuridico')
+def NuevoJuridico():
+    return template("Views/NuevoJuridico")
+
+@post('/NuevoJuridico') # o @route('/NuevoJuridico', method='POST')
+def do_NuevoJuridico():
+    razonSocial= request.forms.get('RazonSocial')
+    cuil= request.forms.get('cuil')
+    usuario= request.forms.get('usuario')
+    contrasenia= request.forms.get('contrasenia')
+    hashContra = pbkdf2_sha256.hash(contrasenia)
+    return agregar_juridico(razonSocial,cuil,usuario,hashContra)
+
+
+@get('/ModificarFisico') # o @route('/ModificarFisico')
+def ModificarFisico():
+    return template("Views/ModificarFisico")
+
+@post('/ModificarFisico') # o @route('/ModificarFisico', method='POST')
+def do_ModificarFisico():
+    dni= request.forms.get('dni')
+    cuil= request.forms.get('cuil')
+    nombre= request.forms.get('nombre')
+    apellido= request.forms.get('apellido')
+    return modificar_fisico(dni,cuil,nombre,apellido)
+
+@get('/ModificarJuridico') # o @route('/ModificarJuridico')
+def ModificarJuridico():
+    return template("Views/ModificarJuridico")
+
+@post('/ModificarJuridico') # o @route('/ModificarJuridico', method='POST')
+def do_ModificarJuridico():
+    razonSocial= request.forms.get('RazonSocial')
+    cuil= request.forms.get('cuil')
+    return modificar_juridico(razonSocial, cuil)
 
 @route('/')
 @get('/login') # o @route('/login')
@@ -49,8 +84,6 @@ def login():
 def do_login():
     username = request.forms.get('username')
     password = request.forms.get('password')
-    #hash = pbkdf2_sha256.hash(password)
-    #print(hash)
     if check_login(username, password):
         return principal()
     else:
@@ -69,6 +102,7 @@ def check_login(user, password):
         CURSOR.close()
         return False
     else:
+        #CAMBIAR PASSWORD A CONTRASENIA
         CURSOR.execute("""SELECT password FROM Usuario WHERE Usuario= :username""", username=user)
         result = CURSOR.fetchone()
         if pbkdf2_sha256.verify(password, result[0]):
@@ -125,15 +159,53 @@ def agregar_fisico(dni,cuil,nombre,apellido,usuario,contrasenia):
     CURSOR = CONNECTION.cursor()
     CURSOR.execute("""INSERT INTO USUARIO VALUES (:usuar, :contra)""", usuar=usuario, contra=contrasenia)
     CURSOR.execute("""INSERT INTO FISICA (DNI, CUIL, Nombre, Apellido, Usuario)
-            VALUES (:dni, :cuil, :nombre, :apellido, :usuario)""")
-    CURSOR.execute("""SELECT * FROM FISICA WHERE DNI = :dni""")
+            VALUES (:dni, :cuil, :nombre, :apellido, :usuario)""", dni=dni, cuil=cuil, nombre=nombre,
+                    apellido=apellido, usuario=usuario)
+    CURSOR.execute("""SELECT * FROM FISICA WHERE DNI = :dni""", dni=dni)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.execute("""commit""")
     CURSOR.close()
     return template("Views/Tablas", col_names=col_names, rows=result)
 
+def agregar_juridico(razonSocial,cuil,usuario,contrasenia):
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""INSERT INTO USUARIO VALUES (:usuar, :contra)""", usuar=usuario, contra=contrasenia)
+    CURSOR.execute("""INSERT INTO Juridica (Razon_Social, CUIL, Usuario)
+            VALUES (:razonSocial, :cuil, :usuario)""", razonSocial=razonSocial, cuil=cuil, usuario=usuario)
+    CURSOR.execute("""SELECT * FROM FISICA WHERE Razon_Social = :razonSocial""", razonSocial=razonSocial)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.execute("""commit""")
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
 
+def modificar_fisico(dni,cuil,nombre,apellido):
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""UPDATE FISICA
+            SET CUIL=:cuil, nombre=:nombre, apellido=:apellido
+            WHERE dni=:dni""",cuil=cuil, nombre=nombre, apellido=apellido, dni=dni)
+    CURSOR.execute("""SELECT * FROM FISICA WHERE DNI = :dni""", dni=dni)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.execute("""commit""")
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
+def modificar_juridico(razonSocial,cuil):
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""UPDATE juridica
+            SET CUIL=:cuil
+            WHERE Razon_Social=:razonSocial""",cuil=cuil, razonSocial=razonSocial)
+    CURSOR.execute("""SELECT * FROM juridica WHERE Razon_Social = :razonSocial""", razonSocial=razonSocial)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.execute("""commit""")
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
 
 @error(404)
 def error404(error):
