@@ -103,7 +103,7 @@ def check_login(user, password):
         return False
     else:
         #CAMBIAR PASSWORD A CONTRASENIA
-        CURSOR.execute("""SELECT password FROM Usuario WHERE Usuario= :username""", username=user)
+        CURSOR.execute("""SELECT contrasenia FROM Usuario WHERE Usuario= :username""", username=user)
         result = CURSOR.fetchone()
         if pbkdf2_sha256.verify(password, result[0]):
             CURSOR.close()
@@ -172,9 +172,9 @@ def agregar_juridico(razonSocial,cuil,usuario,contrasenia):
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
     CURSOR.execute("""INSERT INTO USUARIO VALUES (:usuar, :contra)""", usuar=usuario, contra=contrasenia)
-    CURSOR.execute("""INSERT INTO Juridica (Razon_Social, CUIL, Usuario)
+    CURSOR.execute("""INSERT INTO Juridica (razonsocial, CUIL, Usuario)
             VALUES (:razonSocial, :cuil, :usuario)""", razonSocial=razonSocial, cuil=cuil, usuario=usuario)
-    CURSOR.execute("""SELECT * FROM FISICA WHERE Razon_Social = :razonSocial""", razonSocial=razonSocial)
+    CURSOR.execute("""SELECT * FROM juridica WHERE razonsocial = :razonSocial""", razonSocial=razonSocial)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.execute("""commit""")
