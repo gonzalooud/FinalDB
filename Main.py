@@ -15,11 +15,30 @@ DEBUG = CONFIG['bottle']['debug']
 def get_all_salaries():
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""SELECT ename, sal FROM emp""")
+    CURSOR.execute("""INSERT INTO USUARIO VALUES ('admin','admin')""")
+    CURSOR.execute("""SELECT * FROM usuario""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
     return template("Views/Tablas", col_names=col_names, rows=result)
+
+
+@get('/NuevoFisico') # o @route('/NuevoFisico')
+def NuevoFisico():
+    return template("Views/NuevoFisico")
+
+@post('/NuevoFisico') # o @route('/NuevoFisico', method='POST')
+def do_NuevoFisico():
+    dni= request.forms.get('dni')
+    cuil= request.forms.get('cuil')
+    nombre= request.forms.get('nombre')
+    apellido= request.forms.get('apellido')
+    usuario= request.forms.get('usuario')
+    print(usuario)
+    contrasenia= request.forms.get('contrasenia')
+    hashContra = pbkdf2_sha256.hash(contrasenia)
+    print(hashContra)
+    return agregar_fisico(dni,cuil,nombre,apellido,usuario,hashContra)
 
 @route('/')
 @get('/login') # o @route('/login')
@@ -59,6 +78,7 @@ def check_login(user, password):
             CURSOR.close()
             return False
 
+
 @route('/consulta1')
 def consulta1():
     CONNECTION = cx_Oracle.connect(USER, PASS)
@@ -76,6 +96,43 @@ def consulta1():
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
     return template("Views/Tablas", col_names=col_names, rows=result)
+
+@route('/consulta2')
+def consulta2():
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select extract(year from ib.fechaPago) Año, SUM (ib.alicuota) IIBB SUM(a.alicuota) AUTOS 	SUM(t.alicuota) TASAS SUM(s.alicuota) SELLOS SUM(inm.alicuota) INMUEBLES 
+        from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a
+        CuentaCorrientexTasas t, CuentaCorrientexImpSellos s, 
+        CuentaCorrientexImpInmueble inm
+        where  (extract(year from ib.FechaPago) = extract(year from a.FechaPago))
+	        and (extract(year from ib.FechaPago) = extract(year from t.FechaPago))
+            and (extract(year from ib.FechaPago) = extract(year from s.FechaPago))
+            and (extract(year from ib.FechaPago) = extract(year from inm.FechaPago))
+            and (extract(month from ib.FechaPago) = extract(month from a.FechaPago))
+            and (extract(month from ib.FechaPago) = extract(month from t.FechaPago))
+            and (extract(month from ib.FechaPago) = extract(month from s.FechaPago))
+            and (extract(month from ib.FechaPago) = extract(month from inm.FechaPago))
+        group by extract(year from ib.fechaPago);""")
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
+
+def agregar_fisico(dni,cuil,nombre,apellido,usuario,contrasenia):
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""INSERT INTO USUARIO VALUES (:usuar, :contra)""", usuar=usuario, contra=contrasenia)
+    CURSOR.execute("""INSERT INTO FISICA (DNI, CUIL, Nombre, Apellido, Usuario)
+            VALUES (:dni, :cuil, :nombre, :apellido, :usuario)""")
+    CURSOR.execute("""SELECT * FROM FISICA WHERE DNI = :dni""")
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.execute("""commit""")
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
 
 
 @error(404)

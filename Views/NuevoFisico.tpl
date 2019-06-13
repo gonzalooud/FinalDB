@@ -2,7 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" >
-    <tittle> </tittle>
+    <tittle></tittle>
 </head>
 <body>
 <ul class="nav bg-dark" aria-haspopup="true" aria-expanded="false">
@@ -32,6 +32,39 @@
     </div>
   </li>
 </ul>
+
+<form action="/NuevoFisico" method="post">
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label for="inputDNI">DNI</label>
+      <input type="number" class="form-control" dni id="inputDNI" placeholder="DNI" required>
+    </div>
+    <div class="form-group col-md-6">
+      <label for="inputCUIL">CUIL</label>
+      <input type="text" class="form-control" name="cuil" id="inputCUIL" placeholder="CUIL" required>
+    </div>
+    <div class="form-group col-md-6">
+      <label for="inputNombre">Nombre</label>
+      <input type="text" class="form-control" name="nombre" id="inputNombre" placeholder="Nombre" required>
+    </div>
+    <div class="form-group col-md-6">
+      <label for="inputApellido">Apellido</label>
+      <input type="text" class="form-control" name="apellido" id="inputApellido" placeholder="Apellido" required>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label for="inputUsuario">Usuario</label>
+      <input type="text" class="form-control" id="inputUsuario" name="usuario" placeholder="Usuario" required>
+    </div>
+    <div class="form-group col-md-6">
+      <label for="inputContraseña">Contraseña</label>
+      <input type="password" class="form-control" id="inputContraseña" name="contrasenia" placeholder="Contraseña" required>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Cargar</button>
+</form>
+
 
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
