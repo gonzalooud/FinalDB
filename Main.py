@@ -19,7 +19,7 @@ def get_all_salaries():
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
-    return template("views/all_salaries", col_names=col_names, rows=result)
+    return template("Views/Tablas", col_names=col_names, rows=result)
 
 @route('/')
 @get('/login') # o @route('/login')
@@ -30,12 +30,16 @@ def login():
 def do_login():
     username = request.forms.get('username')
     password = request.forms.get('password')
-    hash = pbkdf2_sha256.hash(password)
-    print(hash)
+    #hash = pbkdf2_sha256.hash(password)
+    #print(hash)
     if check_login(username, password):
-        return "Login correct"
+        return principal()
     else:
-        return "Login failed"
+        return login()
+
+@route('/Principal')
+def principal():
+    return template("Views/Principal")
 
 def check_login(user, password):
     CONNECTION = cx_Oracle.connect(USER, PASS)
@@ -54,6 +58,25 @@ def check_login(user, password):
         else:
             CURSOR.close()
             return False
+
+@route('/consulta1')
+def consulta1():
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select extract(year from ib.fechaPago) Año, SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota) Monto
+    from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a
+        CuentaCorrientexTasas t, CuentaCorrientexImpSellos s, 
+        CuentaCorrientexImpInmueble inm
+    where (extract(year from ib.FechaPago) = extract(year from a.FechaPago))
+	    and (extract(year from ib.FechaPago) = extract(year from t.FechaPago))
+        and (extract(year from ib.FechaPago) = extract(year from s.FechaPago))
+        and (extract(year from ib.FechaPago) = extract(year from inm.FechaPago))
+    group by extract(year from ib.fechaPago);""")
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
 
 @error(404)
 def error404(error):

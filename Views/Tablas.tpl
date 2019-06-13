@@ -6,9 +6,9 @@
 </head>
 <body>
 <div class="container">
-<table border="1">
+<table table-striped border="1">
     %for col_name in col_names:
-        <td><b>{{col_name}}</b></td>
+         <td><b>{{col_name}}</b></td>
     %end
 
     %for row in rows:
