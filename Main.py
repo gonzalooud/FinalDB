@@ -15,7 +15,7 @@ DEBUG = CONFIG['bottle']['debug']
 def get_all_salaries():
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""INSERT INTO USUARIO VALUES ('admin','admin')""")
+    #CURSOR.execute("""INSERT INTO USUARIO VALUES (:algo,:algo)""", algo='chanchito')
     CURSOR.execute("""SELECT * FROM usuario""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
@@ -117,15 +117,15 @@ def check_login(user, password):
 def consulta1():
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""select extract(year from ib.fechaPago) Año, SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota) Monto
-    from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a
+    CURSOR.execute("""select extract(year from ib.fechaPago) Anio, SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota) Monto
+    from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a,
         CuentaCorrientexTasas t, CuentaCorrientexImpSellos s, 
         CuentaCorrientexImpInmueble inm
     where (extract(year from ib.FechaPago) = extract(year from a.FechaPago))
 	    and (extract(year from ib.FechaPago) = extract(year from t.FechaPago))
         and (extract(year from ib.FechaPago) = extract(year from s.FechaPago))
         and (extract(year from ib.FechaPago) = extract(year from inm.FechaPago))
-    group by extract(year from ib.fechaPago);""")
+    group by extract(year from ib.fechaPago)""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -135,8 +135,8 @@ def consulta1():
 def consulta2():
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""select extract(year from ib.fechaPago) Año, SUM (ib.alicuota) IIBB SUM(a.alicuota) AUTOS 	SUM(t.alicuota) TASAS SUM(s.alicuota) SELLOS SUM(inm.alicuota) INMUEBLES 
-        from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a
+    CURSOR.execute("""select extract(year from ib.fechaPago) Anio, SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(t.alicuota) TASAS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES 
+        from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a,
         CuentaCorrientexTasas t, CuentaCorrientexImpSellos s, 
         CuentaCorrientexImpInmueble inm
         where  (extract(year from ib.FechaPago) = extract(year from a.FechaPago))
@@ -147,7 +147,7 @@ def consulta2():
             and (extract(month from ib.FechaPago) = extract(month from t.FechaPago))
             and (extract(month from ib.FechaPago) = extract(month from s.FechaPago))
             and (extract(month from ib.FechaPago) = extract(month from inm.FechaPago))
-        group by extract(year from ib.fechaPago);""")
+        group by (extract(year from ib.fechaPago))""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -171,7 +171,7 @@ def do_consulta3():
         inner join autos a on a.patente=t.patente
         inner join fisica f on f.DNI=a.DNI
         inner join juridica j on j.DNI=a.DNI
-        where t.patente=:dominio;""", dominio=dominio)
+        where t.patente=:dominio""", dominio=dominio)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -185,7 +185,7 @@ def consulta4():
         from ValoresInmuebles v
         inner join inmuebles i on i.id=v.id
         where v.Fecha = (current_date from dual - 365)
-        and v.valor>=1000000;""")
+        and v.valor>=1000000""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -216,6 +216,77 @@ def do_consulta6():
             and (inm.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
             group by extract (year from ib.fechaPago), extract(month from ib.fechaPago)""",
                    fecha1=fecha1, fecha2=fecha2)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
+@get('/consulta7') # o @route('/consulta7')
+def consulta7():
+    return template("Views/consulta7Form")
+
+@post('/consulta7') # o @route('/consulta7', method='POST')
+def do_consulta7():
+    dniRazon= request.forms.get('dniRazon')
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select  ib.saldo SaldoIIBB, ib.fechaPago FechaPagoIIBB, 
+        a.saldo SaldoAutos, a.fechaPago FechaPagoAutos, t.saldo SaldoTasas, t.fechaPago Fecha PagoTasas, 
+        s.saldo SaldoSellos, s.fechaPago FechaPagoSellos, 
+        inm.saldo SaldoInmuebles, inm.fechaPago FechaPagoInmuebles
+        from cuentaCorriente cc
+        inner join cuentaCorrienteImpBruto ib on ib.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteImpAuto a on a.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteTasas t on t.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteImpSello s on s.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteImpInmueble inm on inm.nroCuenta = cc.nroCuenta
+        where ((cc.DNI = :dniRazon) or (cc.razonSocial = :dniRazon))
+	    and ib.fechaPago = (select max(fechaPago) from cuentaCorrienteImpBruto)
+	    and a.fechaPago = (select max(fechaPago) from cuentaCorrienteImpAuto)
+	    and t.fechaPago = (select max(fechaPago) from cuentaCorrienteTasas)
+	    and s.fechaPago = (select max(fechaPago) from cuentaCorrienteImSello)
+	    and inm.fechaPago = (select max(fechaPago) from cuentaCorrienteImpInmueble)""", dniRazon=dniRazon)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
+@get('/consulta8') # o @route('/consulta8')
+def consulta8():
+    return template("Views/consulta8Form")
+
+@post('/consulta8') # o @route('/consulta8', method='POST')
+def do_consulta8():
+    delegacion= request.forms.get('delegacion')
+    mes = request.forms.get('mes')
+    anio = request.forms.get('anio')
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select d.codigo, d.ciudad, ib.codigo, a.codigo, t.codigo, s.codigo, inm.codigo, 
+        count(ib.fechaPago), count(a.fechaPago), count(t.fechaPago), count(s.fechaPago), 
+        count(inm.fechaPago)
+        from cuentaCorriente cc
+        inner join cuentaCorrienteImpBruto ib on ib.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteImpAuto a on a.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteTasas t on t.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteImpSellos s on s.nroCuenta = cc.nroCuenta
+        inner join cuentaCorrienteImpInmuebles inm on inm.nroCuenta = cc.nroCuenta
+        inner join fisicas f on f.DNI/Razon_Social = cc.DNI/Razon_Social
+        inner join juridicas j on j.DNI/Razon_Social = cc.DNI/Razon_Social
+        inner join Delegaciones d on d.codigo = f.codigo
+        inner join Delegaciones d on d.codigo = j.codigo
+        where ( (extract(year from ib.fechaPago) = :anio)
+	    and (extract(year from ib.fechaPago) = extract(year from a.fechaPago))
+	    and (extract(year from ib.fechaPago) = extract(year from t.fechaPago))
+	    and (extract(year from ib.fechaPago) = extract(year from s.fechaPago))
+	    and (extract(year from ib.fechaPago) = extract(year from inm.fechaPago))
+    	and (extract(month from ib.fechaPago) = :mes)
+	    and (extract(month from ib.fechaPago) = extract(month from a.fechaPago))
+	    and (extract(month from ib.fechaPago) = extract(month from t.fechaPago))
+	    and (extract(month from ib.fechaPago) = extract(month from s.fechaPago))
+	    and (extract(month from ib.fechaPago) = extract(month from inm.fechaPago))
+	    and (d.codigo = :delegacion) )
+        group by :delegacion, :anio, :mes""", delegacion=delegacion, anio=anio, mes=mes)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()

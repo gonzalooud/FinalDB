@@ -2,7 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" >
-    <tittle> </tittle>
+    <tittle></tittle>
 </head>
 <body>
 <ul class="nav bg-dark" aria-haspopup="true" aria-expanded="false">
@@ -33,27 +33,15 @@
   </li>
 </ul>
 
-<div class="container mt-5 pt-5">
-    <div class="container mt-5 pt-5">
-    <ul>
-    <a class="btn btn-primary col-3" href="/consulta1" type="submit">Consulta 1</a>
-    <a class="btn btn-primary col-3" href="/consulta2" type="submit">Consulta 2</a>
-    <a class="btn btn-primary col-3" href="/consulta3" type="submit">Consulta 3</a>
-    </u>
+<div class="container mt-5">
+<form action="/consulta7" method="post">
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label for="inputDniRazon">Dni / Razon Social</label>
+      <input type="text" class="form-control" name="dniRazon" id="inputDniRazon" placeholder="Ingresar el Dni o Razon Social" required>
     </div>
-    <div class="container mt-4 pt-4">
-    <ul>
-    <a class="btn btn-primary col-3" href="/consulta4" type="submit">Consulta 4</a>
-    <a class="btn btn-primary col-3" href="/consulta5" type="submit">Consulta 5</a>
-    <a class="btn btn-primary col-3" href="/consulta6" type="submit">Consulta 6</a>
-    </u>
-    </div>
-    <div class="container mt-4 pt-4">
-    <ul>
-    <a class="btn btn-primary col-3" href="/consulta7" type="submit">Consulta 7</a>
-    <a class="btn btn-primary col-3" href="/consulta8" type="submit">Consulta 8</a>
-    </u>
-    </div>
+  <button type="submit" class="btn btn-primary">Cargar</button>
+</form>
 </div>
 
 
