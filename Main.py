@@ -210,7 +210,7 @@ where
     and d.codigo = j.codigo
     group by  extract(year from ib.FechaPago), ib.FechaPago, extract(year from inm.FechaPago), extract(month from ib.FechaPago), ib.FechaPago, 
     d.codigo
-    order by Recaudacion desc;""")
+    order by Recaudacion desc""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
