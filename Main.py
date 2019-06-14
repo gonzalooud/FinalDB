@@ -154,6 +154,73 @@ def consulta2():
     return template("Views/Tablas", col_names=col_names, rows=result)
 
 
+@get('/consulta3') # o @route('/consulta3')
+def consulta3():
+    return template("Views/consulta3Form")
+
+@post('/consulta3') # o @route('/consulta3', method='POST')
+def do_consulta3():
+    dominio = request.forms.get('dominio')
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select a.modelo modelo , t.antiguotitular TitularAntiguo,t.fecha Fecha,
+        case when f.nombre=NULL then j.usuario or 
+        case when j.usuario=NULL then f.nombre
+        end Titular
+        from transferencia t
+        inner join autos a on a.patente=t.patente
+        inner join fisica f on f.DNI=a.DNI
+        inner join juridica j on j.DNI=a.DNI
+        where t.patente=:dominio;""", dominio=dominio)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
+@route('/consulta4')
+def consulta4():
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select i.direccion direccion,i.numero numero,i.piso piso,i.depto depto
+        from ValoresInmuebles v
+        inner join inmuebles i on i.id=v.id
+        where v.Fecha = (current_date from dual - 365)
+        and v.valor>=1000000;""")
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
+@get('/consulta6') # o @route('/consulta6')
+def consulta6():
+    return template("Views/consulta6Form")
+
+@post('/consulta6') # o @route('/consulta6', method='POST')
+def do_consulta6():
+    fecha1= request.forms.get('fecha1')
+    fecha2 = request.forms.get('fecha2')
+    CONNECTION = cx_Oracle.connect(USER, PASS)
+    CURSOR = CONNECTION.cursor()
+    CURSOR.execute("""select SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(t.alicuota) TASAS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES,
+            (SUM (ib.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %IIBB,
+            (SUM (a.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %AUTO,
+            (SUM (t.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %TASAS,
+            (SUM (s.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %SELLOS,
+            (SUM (inm.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %INMUEBLES
+            from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a, CuentaCorrientexTasas t, CuentaCorrientexImpSellos s, 
+            CuentaCorrientexImpInmueble inm
+            where (ib.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
+            and (a.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
+            and (t.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
+            and (s.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
+            and (inm.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
+            group by extract (year from ib.fechaPago), extract(month from ib.fechaPago)""",
+                   fecha1=fecha1, fecha2=fecha2)
+    result = CURSOR.fetchall()
+    col_names = [row[0] for row in CURSOR.description]
+    CURSOR.close()
+    return template("Views/Tablas", col_names=col_names, rows=result)
+
 def agregar_fisico(dni,cuil,nombre,apellido,usuario,contrasenia):
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
