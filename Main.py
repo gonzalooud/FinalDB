@@ -128,21 +128,26 @@ group by extract (year from b.fechapago)""")
     CURSOR.close()
     return template("Views/Tablas", col_names=col_names, rows=result)
 
-@route('/consulta2')
+@get('/consulta2') # o @route('/consulta2')
 def consulta2():
+    return template("Views/consulta2Form")
+
+@post('/consulta2') # o @route('/consulta2', method='POST')
+def consulta2():
+    anio = request.forms.get('anio')
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
     CURSOR.execute("""select extract(month from ib.fechaPago) Mes, SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES
    	from CuentaCorrienteImpBruto ib, CuentaCorrienteImpAuto a, CuentaCorrienteImpSello s,
    	CuentaCorrienteImpInmueble inm
-   	where  (extract(year from ib.FechaPago) = '2018')
-       	and (extract(year from ib.FechaPago) = '2018')
-       	and (extract(year from ib.FechaPago) = '2018')
+   	where  (extract(year from ib.FechaPago) = :anio)
+       	and (extract(year from ib.FechaPago) = :anio)
+       	and (extract(year from ib.FechaPago) = :anio)
        	and (extract(month from ib.FechaPago) = extract(month from a.FechaPago))
        	and (extract(month from ib.FechaPago) = extract(month from s.FechaPago))
        	and (extract(month from ib.FechaPago) = extract(month from inm.FechaPago))
    	group by extract(month from ib.fechaPago)
-   	order by extract(month from ib.fechaPago)""")
+   	order by extract(month from ib.fechaPago)""", anio=anio)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
