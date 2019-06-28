@@ -117,15 +117,12 @@ def check_login(user, password):
 def consulta1():
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""select extract(year from ib.fechapago) Anio, SUM(ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota) Monto
-from cuentacorrienteimpbruto ib, cuentacorrienteImpAuto a,
-CuentaCorrienteTasa t, CuentaCorrienteImpSello s, 
-CuentaCorrienteImpInmueble inm
-where (extract(year from ib.fechapago) = extract(year from a.fechapago))
-and (extract(year from a.fechapago) = extract(year from t.fechapago))
-and (extract(year from t.fechapago) = extract(year from s.fechapago))
-and (extract(year from s.fechapago) = extract(year from inm.fechapago))
-group by extract(year from ib.fechapago)""")
+    CURSOR.execute("""select extract(year from b.fechapago) Anio, SUM(b.alicuota + a.alicuota  + s.alicuota + i.alicuota) Monto
+from cuentacorrienteimpbruto b
+inner join cuentacorrienteImpAuto a on extract(year from b.fechapago) = extract(year from a.fechapago)
+inner join CuentaCorrienteImpSello s on extract(year from b.fechapago) = extract(year from s.fechapago)
+inner join CuentaCorrienteImpInmueble i on extract(year from b.fechapago) = extract(year from i.fechapago)
+group by extract (year from b.fechapago)""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -135,19 +132,17 @@ group by extract(year from ib.fechapago)""")
 def consulta2():
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""select extract(year from ib.fechaPago) Anio, SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(t.alicuota) TASAS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES 
-        from CuentaCorrienteImpBruto ib, CuentaCorrienteImpAuto a,
-        CuentaCorrienteTasa t, CuentaCorrienteImpSello s, 
-        CuentaCorrienteImpInmueble inm
-        where  (extract(year from ib.FechaPago) = extract(year from a.FechaPago))
-	        and (extract(year from ib.FechaPago) = extract(year from t.FechaPago))
-            and (extract(year from ib.FechaPago) = extract(year from s.FechaPago))
-            and (extract(year from ib.FechaPago) = extract(year from inm.FechaPago))
-            and (extract(month from ib.FechaPago) = extract(month from a.FechaPago))
-            and (extract(month from ib.FechaPago) = extract(month from t.FechaPago))
-            and (extract(month from ib.FechaPago) = extract(month from s.FechaPago))
-            and (extract(month from ib.FechaPago) = extract(month from inm.FechaPago))
-        group by extract(year from ib.fechaPago)""")
+    CURSOR.execute("""select extract(month from ib.fechaPago) Mes, SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES
+   	from CuentaCorrienteImpBruto ib, CuentaCorrienteImpAuto a, CuentaCorrienteImpSello s,
+   	CuentaCorrienteImpInmueble inm
+   	where  (extract(year from ib.FechaPago) = '2018')
+       	and (extract(year from ib.FechaPago) = '2018')
+       	and (extract(year from ib.FechaPago) = '2018')
+       	and (extract(month from ib.FechaPago) = extract(month from a.FechaPago))
+       	and (extract(month from ib.FechaPago) = extract(month from s.FechaPago))
+       	and (extract(month from ib.FechaPago) = extract(month from inm.FechaPago))
+   	group by extract(month from ib.fechaPago)
+   	order by extract(month from ib.fechaPago)""")
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -190,27 +185,29 @@ def consulta4():
     CURSOR.close()
     return template("Views/Tablas", col_names=col_names, rows=result)
 
-@route('/consulta5')
+@get('/consulta5') # o @route('/consulta5')
 def consulta5():
+    return template("Views/consulta5Form")
+
+@post('/consulta5') # o @route('/consulta5', method='POST')
+def consulta5():
+    fecha1 = request.forms.get('fecha1')
+    fecha2 = request.forms.get('fecha2')
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""select d.codigo Delegacion, extract(year from inm.FechaPago) Year, extract(month from ib.FechaPago) Month, SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota +inm.alicuota) Recaudacion
+    CURSOR.execute("""select d.codigo Delegacion, extract(year from ib.FechaPago) Year, extract(month from ib.FechaPago) Month, SUM (ib.alicuota + a.alicuota + s.alicuota) Recaudacion
 from CuentaCorrienteImpBruto ib, CuentaCorrienteImpAuto a,
-        CuentaCorrienteTasa t, CuentaCorrienteImpSello s, 
-        CuentaCorrienteImpInmueble inm ,Delegaciones d
+        CuentaCorrienteImpSello s, Delegaciones d
 inner join fisico f on d.codigo = f.codigo
 inner join juridica j on d.codigo = j.codigo
 where 
-    ib.FechaPago between date '2018-08-09' and date '2019-09-08'
-    and a.FechaPago between date '2018-08-09' and date '2019-09-08'
-    and t.FechaPago between date '2018-08-09' and date '2019-09-08'
-    and s.FechaPago between date '2018-08-09' and date '2019-09-08'
-    and inm.FechaPago between date '2018-08-09' and date '2019-09-08'
+    ib.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd')
+    and a.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd')
+    and s.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd')
     and d.codigo = f.codigo
     and d.codigo = j.codigo
-    group by  extract(year from ib.FechaPago), ib.FechaPago, extract(year from inm.FechaPago), extract(month from ib.FechaPago), ib.FechaPago, 
-    d.codigo
-    order by Recaudacion desc""")
+    group by  extract(year from ib.FechaPago), extract(month from ib.FechaPago), d.codigo
+    order by Recaudacion desc""", fecha1=fecha1, fecha2=fecha2)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.close()
@@ -227,17 +224,15 @@ def do_consulta6():
     fecha2 = request.forms.get('fecha2')
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""select SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(t.alicuota) TASAS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES,
-            (SUM (ib.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %IIBB,
-            (SUM (a.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %AUTO,
-            (SUM (t.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %TASAS,
-            (SUM (s.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %SELLOS,
-            (SUM (inm.alicuota) / (SUM (ib.alicuota + a.alicuota + t.alicuota + s.alicuota + inm.alicuota))) %INMUEBLES
-            from CuentaCorrientexImpIngresosBrutos ib, CuentaCorrientexImpAuto a, CuentaCorrientexTasas t, CuentaCorrientexImpSellos s, 
-            CuentaCorrientexImpInmueble inm
+    CURSOR.execute("""select SUM (ib.alicuota) IIBB, SUM(a.alicuota) AUTOS, SUM(s.alicuota) SELLOS, SUM(inm.alicuota) INMUEBLES,
+           SUM (ib.alicuota) / (SUM (ib.alicuota + a.alicuota+ s.alicuota + inm.alicuota)) IIBB,
+           SUM (a.alicuota) / (SUM (ib.alicuota + a.alicuota + s.alicuota + inm.alicuota)) AUTO,
+           SUM (s.alicuota) / (SUM (ib.alicuota + a.alicuota + s.alicuota + inm.alicuota)) SELLOS,
+           SUM (inm.alicuota) / (SUM (ib.alicuota + a.alicuota + s.alicuota + inm.alicuota)) INMUEBLES
+            from CuentaCorrienteImpBruto ib, CuentaCorrienteImpAuto a, CuentaCorrienteImpSello s, 
+            CuentaCorrienteImpInmueble inm
             where (ib.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
             and (a.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
-            and (t.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
             and (s.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
             and (inm.FechaPago between to_date (:fecha1, 'yyyy/mm/dd') and to_date (:fecha2, 'yyyy/mm/dd'))
             group by extract (year from ib.fechaPago), extract(month from ib.fechaPago)""", fecha1=fecha1, fecha2=fecha2)
@@ -332,10 +327,10 @@ def agregar_fisico(dni,cuil,nombre,apellido,usuario,contrasenia):
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
     CURSOR.execute("""INSERT INTO USUARIO VALUES (:usuar, :contra)""", usuar=usuario, contra=contrasenia)
-    CURSOR.execute("""INSERT INTO FISICA (DNI, CUIL, Nombre, Apellido, Usuario)
+    CURSOR.execute("""INSERT INTO FISICO (DNI, CUIL, Nombre, Apellido, Usuario)
             VALUES (:dni, :cuil, :nombre, :apellido, :usuario)""", dni=dni, cuil=cuil, nombre=nombre,
                     apellido=apellido, usuario=usuario)
-    CURSOR.execute("""SELECT * FROM FISICA WHERE DNI = :dni""", dni=dni)
+    CURSOR.execute("""SELECT * FROM FISICO WHERE DNI = :dni""", dni=dni)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.execute("""commit""")
@@ -358,10 +353,10 @@ def agregar_juridico(razonSocial,cuil,usuario,contrasenia):
 def modificar_fisico(dni,cuil,nombre,apellido):
     CONNECTION = cx_Oracle.connect(USER, PASS)
     CURSOR = CONNECTION.cursor()
-    CURSOR.execute("""UPDATE FISICA
+    CURSOR.execute("""UPDATE FISICO
             SET CUIL=:cuil, nombre=:nombre, apellido=:apellido
             WHERE dni=:dni""",cuil=cuil, nombre=nombre, apellido=apellido, dni=dni)
-    CURSOR.execute("""SELECT * FROM FISICA WHERE DNI = :dni""", dni=dni)
+    CURSOR.execute("""SELECT * FROM FISICO WHERE DNI = :dni""", dni=dni)
     result = CURSOR.fetchall()
     col_names = [row[0] for row in CURSOR.description]
     CURSOR.execute("""commit""")
